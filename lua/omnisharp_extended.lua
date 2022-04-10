@@ -56,9 +56,6 @@ M.buf_from_metadata = function(result, client_id)
   vim.api.nvim_buf_set_option(bufnr, 'filetype', 'cs')
   vim.api.nvim_buf_set_option(bufnr, 'modified', false)
 
-  -- attach lsp client ??
-  vim.lsp.buf_attach_client(bufnr, client_id)
-
   -- vim.api.nvim_win_set_buf(0, bufnr)
 
   -- set_cursor is (1, 0) indexed, where LSP range is 0 indexed, so add 1 to line number
