@@ -36,7 +36,7 @@ U.get_or_create_buf = function(name)
     -- in buffer name. On Windows nvim_buf_set_name might change the buffer name and include some stuff before.
     if string.find(name, '^/%$metadata%$/.*$') then
       local normalized_bufname = string.gsub(bufname, '\\', '/')
-      if string.find(normalized_bufname, name) then
+      if string.find(normalized_bufname, name, 1, true) then
         return buf
       end
     else
@@ -51,8 +51,8 @@ U.get_or_create_buf = function(name)
   return bufnr
 end
 
-U.set_qflist_locations = function(locations)
-  local items = vim.lsp.util.locations_to_items(locations)
+U.set_qflist_locations = function(locations, offset_encoding)
+  local items = vim.lsp.util.locations_to_items(locations, offset_encoding)
   vim.fn.setqflist({}, ' ', {
     title = 'Language Server';
     items = items;
