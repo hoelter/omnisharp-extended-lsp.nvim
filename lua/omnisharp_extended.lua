@@ -1,9 +1,15 @@
 local utils = require('omnisharp_extended/utils')
-local make_entry = require "telescope.make_entry"
 
-local pickers = require "telescope.pickers"
-local finders = require "telescope.finders"
-local conf = require("telescope.config").values
+local pickers = nil
+local finders = nil
+local conf = nil
+local telescope_exists, make_entry = pcall(require, "telescope.make_entry");
+if telescope_exists then
+  pickers = require "telescope.pickers"
+  finders = require "telescope.finders"
+  conf = require("telescope.config").values
+end
+
 
 local M = {}
 
@@ -26,7 +32,7 @@ end
 M.get_omnisharp_client = function()
   local clients = vim.lsp.buf_get_clients(0)
   for _, client in pairs(clients) do
-    if client.name == "omnisharp" then
+    if client.name == "omnisharp" or client.name == "omnisharp_mono" then
       return client
     end
   end
@@ -84,7 +90,11 @@ M.get_metadata = function(locations)
       -- request_sync?
       -- if async, need to trigger when all are finished
       local result, err = client.request_sync('o#/metadata', params, 10000)
-      if not err then
+        if not err and result.result.Source == nil then
+          print("No definition found")
+          return nil
+        end
+        if not err and result.result.Source ~= nil then
         local bufnr, name = M.buf_from_metadata(result.result, client.id)
         -- change location name to the one returned from metadata
         -- alternative is to open buffer under location uri
@@ -142,6 +152,8 @@ end
 M.handle_locations = function(locations, offset_encoding)
   local fetched = M.get_metadata(locations)
 
+  if fetched == nil then
+    return true end
   if not vim.tbl_isempty(fetched) then
     if #locations > 1 then
       utils.set_qflist_locations(locations, offset_encoding)
@@ -269,6 +281,10 @@ M.handler_telescope = function(err, result, ctx, _)
 end
 
 M.telescope_lsp_definitions = function()
+  if not telescope_exists then
+    error("Telescope is not available, this function only works with Telescope.")
+  end
+
   local client = M.get_omnisharp_client()
   if client then
     local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
